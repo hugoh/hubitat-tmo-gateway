@@ -13,10 +13,6 @@ metadata {
         capability "Actuator"
 
         command "reboot", []
-
-        attribute "nonce","string"
-        attribute "csrfToken","string"
-        attribute "webJar","string"
     }
 
     preferences {
