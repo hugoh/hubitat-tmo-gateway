@@ -6,42 +6,44 @@
 
 metadata {
     definition(
-            name: "T-Mobile Internet Gateway Driver",
-            namespace: "hugoh",
-            author: "Hugo Haas",
-            importUrl: "https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy") {
-        capability "Actuator"
+            name: 'T-Mobile Internet Gateway Driver',
+            namespace: 'hugoh',
+            author: 'Hugo Haas',
+            importUrl: 'https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy') {
+        capability 'Actuator'
 
-        command "reboot", []
+        command 'reboot'
     }
 
     preferences {
-        input name: "username", type: "string", title: "T-Mobile Router Username"
-        input name: "password", type: "string", title: "T-Mobile Router Password"
-        input name: "IP", type: "string", title: "Router IP address", defaultValue: "192.168.12.1"
-        input name: "Gateway", type: "enum", title: "Type of gateway", options: ["Nokia"], defaultValue: "Nokia"
-        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
+        input name: 'username', type: 'string', title: 'T-Mobile Gateway Username'
+        input name: 'password', type: 'string', title: 'T-Mobile Gateway Password'
+        input name: 'IP', type: 'string', title: 'Router IP address', defaultValue: '192.168.12.1'
+        input name: 'Gateway', type: 'enum', title: 'Type of gateway', options: ['Nokia'], defaultValue: 'Nokia'
+        input name: 'dryRun', type: 'bool',
+                    title: '[DRY-RUN] Only pretend to send commands; for debugging purposes', defaultValue: false
+        input name: 'logEnable', type: 'bool', title: 'Enable debug logging', defaultValue: false
     }
 }
 
-void logDebug(msg) {
+void logDebug(String msg) {
     if (logEnable) {
-        log.debug msg
+        log.debug(msg)
     }
 }
 
-boolean login() {
+void login() {
     boolean success = false
-    httpGet("http://${settings.IP}/login_web_app.cgi?nonce", { nonceResp ->
+    httpGet("http://${settings.IP}/login_web_app.cgi?nonce") { nonceResp ->
         if (nonceResp?.isSuccess()) {
-            def nonceJson = parseJson(nonceResp.getData().toString())
+            nonceJson = parseJson(nonceResp.getData().toString())
             logDebug("Got nonce JSON: ${nonceJson}")
             nonce = nonceJson.nonce
             logDebug("Got nonce: ${nonce}")
-            def passHashInput = settings.password.toLowerCase()
-            def userPassHash = sha256(settings.username, passHashInput)
-            def userPassNonceHash = sha256url(userPassHash, nonce)
-            def loginRequest = [
+            passHashInput = settings.password.toLowerCase()
+            userPassHash = sha256(settings.username, passHashInput)
+            userPassNonceHash = sha256url(userPassHash, nonce)
+            loginRequest = [
                     'uri' : "http://${settings.IP}/login_web_app.cgi",
                     'body': [
                             'userhash'     : sha256url(settings.username, nonce),
@@ -53,48 +55,53 @@ boolean login() {
                     ]
             ]
             logDebug("Login request: ${loginRequest}")
-            httpPost(loginRequest, { loginResp ->
+            httpPost(loginRequest) { loginResp ->
                 if (loginResp?.isSuccess()) {
-                    def resp = loginResp.getData().toString()
+                    resp = loginResp.getData().toString()
                     logDebug("Login response: ${resp}")
-                    def loginJson = parseJson(resp)
+                    loginJson = parseJson(resp)
                     state.sid = loginJson.sid
                     logDebug("Sid: ${state.sid}")
                     state.csrfToken = loginJson.token
                     logDebug("Token: ${state.csrfToken}")
                     success = true
                 }
-            })
+            }
         }
-    })
+    }
     state.loginSuccessful = success
 }
 
-def reboot() {
+void reboot() {
     login()
     if (!state.loginSuccessful) {
-        log.error("Cannot reboot without successful login flow")
+        log.error('Cannot reboot without successful login flow')
         return
     }
-    def rebootRequest = [
+    rebootRequest = [
             'uri' : "http://${settings.IP}/reboot_web_app.cgi",
             headers: [
-                "Cookie": "sid=${state.sid}"
+                'Cookie': "sid=${state.sid}"
             ],
             'body': [
                     'csrf_token'     : state.csrfToken,
             ]
     ]
     logDebug("Reboot request: ${rebootRequest}")
-    httpPost(rebootRequest, { rebootResp ->
-        resp = rebootResp.getData()
-        if (rebootResp?.isSuccess()) {
-            logDebug("Reboot response: ${resp}")
-            log.info("T-Mobile Internet Router reboot successfully requested")
-        } else {
-            log.error("Reboot request failed: ${resp}")
+    rebootMsg = 'T-Mobile Internet Router reboot successfully requested'
+    if (!settings.dryRun) {
+        httpPost(rebootRequest) { rebootResp ->
+            resp = rebootResp.getData()
+            if (rebootResp?.isSuccess()) {
+                logDebug("Reboot response: ${resp}")
+                log.info(rebootMsg)
+            } else {
+                log.error("Reboot request failed: ${resp}")
+            }
         }
-    })
+    } else {
+        log.info("[DRY-RUN] ${rebootMsg} [/DRY-RUN]")
+    }
 }
 
 String base64urlEscape(String b64) {
@@ -119,7 +126,7 @@ String base64urlEscape(String b64) {
 }
 
 String sha256(String val1, String val2) {
-    def hash = java.security.MessageDigest.getInstance("SHA-256")
+    hash = java.security.MessageDigest.getInstance('SHA-256')
     hash.update("${val1}:${val2}".getBytes('UTF-8'))
     return hash.digest().encodeBase64().toString()
 }
@@ -129,7 +136,7 @@ String sha256url(String val1, String val2) {
 }
 
 String random16bytes() {
-    Random r = new Random();
+    Random r = new Random()
     byte[] bytes = new byte[16]
     r.nextBytes(bytes)
     return base64urlEscape(bytes.encodeBase64().toString())
