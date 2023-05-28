@@ -1,37 +1,12 @@
 /**
  * Virtual button to reboot T-Mobile Internet Router
  *
- * Heavily inspired by https://github.com/highvolt-dev/tmo-monitor
- * MIT License
- * Copyright (c) 2021 highvolt-dev
- * Copyright (c) 2023 Hugo Haas
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * Supported hardware:
- * - Nokia gateway
+ * Credits for the logic go to highvolt-dev: https://github.com/highvolt-dev/tmo-monitor
  */
 
 metadata {
     definition(
-//            name: "T-Mobile Internet Router Reboot Button",
-            name: "tmo-router-reboot-switch",
+            name: "T-Mobile Internet Router Reboot Button",
             namespace: "hugoh",
             author: "Hugo Haas") {
         capability "Actuator"
@@ -47,6 +22,7 @@ metadata {
         input name: "username", type: "string", title: "T-Mobile Router Username"
         input name: "password", type: "string", title: "T-Mobile Router Password"
         input name: "IP", type: "string", title: "Router IP address", defaultValue: "192.168.12.1"
+        input name: "Gateway", type: "enum", title: "Type of gateway", options: ["Nokia"], defaultValue: "Nokia"
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: false
     }
 }
@@ -57,12 +33,8 @@ void logDebug(msg) {
     }
 }
 
-// Functions using authenticated web API endpoints
-def reboot() {
-    String nonce
-    String sid
-    String token
-    // Login
+boolean login() {
+    boolean success = false
     httpGet("http://${settings.IP}/login_web_app.cgi?nonce", { nonceResp ->
         if (nonceResp?.isSuccess()) {
             def nonceJson = parseJson(nonceResp.getData().toString())
@@ -83,35 +55,40 @@ def reboot() {
                             'enciv'        : random16bytes()
                     ]
             ]
-            logDebug("Login request: ${loginRequestJson}")
+            logDebug("Login request: ${loginRequest}")
             httpPost(loginRequest, { loginResp ->
                 if (loginResp?.isSuccess()) {
                     def resp = loginResp.getData().toString()
                     logDebug("Login response: ${resp}")
                     def loginJson = parseJson(resp)
-                    sid = loginJson.sid
-                    logDebug("Sid: {sid}")
-                    token = loginJson.token
-                    logDebug("Token: ${token}")
+                    state.sid = loginJson.sid
+                    logDebug("Sid: ${state.sid}")
+                    state.csrfToken = loginJson.token
+                    logDebug("Token: ${state.csrfToken}")
+                    success = true
                 }
             })
         }
     })
-    if (!nonce || !token || !sid) {
-        log.error("Error logging in")
-        return;
+    state.loginSuccessful = success
+}
+
+def reboot() {
+    login()
+    if (!state.loginSuccessful) {
+        log.error("Cannot reboot without successful login flow")
+        return
     }
-    // Reboot
     def rebootRequest = [
             'uri' : "http://${settings.IP}/reboot_web_app.cgi",
             headers: [
-                "Cookie": "sid=${sid}"
+                "Cookie": "sid=${state.sid}"
             ],
             'body': [
-                    'csrf_token'     : token,
+                    'csrf_token'     : state.csrfToken,
             ]
     ]
-    logDebug("Reboot request: ${loginRequestJson}")
+    logDebug("Reboot request: ${rebootRequest}")
     httpPost(rebootRequest, { rebootResp ->
         resp = rebootResp.getData()
         if (rebootResp?.isSuccess()) {
