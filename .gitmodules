@@ -1,3 +1,0 @@
-[submodule "vendor/syepes/Hubitat"]
-	path = vendor/syepes/Hubitat
-	url = git@github.com:syepes/Hubitat.git
