@@ -9,7 +9,7 @@ metadata {
             name: "T-Mobile Internet Router Reboot Button",
             namespace: "hugoh",
             author: "Hugo Haas",
-            importUrl: "https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/master/tmo-gateway.groovy") {
+            importUrl: "https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy") {
         capability "Actuator"
 
         command "reboot", []
