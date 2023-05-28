@@ -1,0 +1,18 @@
+{
+  "packageName": "hubitat-tmo-gateway",
+  "documentationLink": "https://github.com/hugoh/hubitat-tmo-gateway/blob/release/README.md",
+  "communityLink": "https://community.hubitat.com/t/release-t-mobile-home-internet-gateway-driver/119490",
+  "author": "Hugo Haas",
+  "category": "Integrations",
+  "drivers": [
+     {
+      "id": "85838AE9-EB17-423B-A1DE-83F13FE040E1",
+      "name": "tmo-gateway",
+      "namespace": "hugoh",
+      "location": "https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy",
+      "required": true,
+      "oauth": false,
+      "description": "T-Mobile Internet Gateway Driver"
+     }
+  ]
+}

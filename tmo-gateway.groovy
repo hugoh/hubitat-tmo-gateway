@@ -6,7 +6,7 @@
 
 metadata {
     definition(
-            name: "T-Mobile Internet Router Reboot Button",
+            name: "T-Mobile Internet Gateway Driver",
             namespace: "hugoh",
             author: "Hugo Haas",
             importUrl: "https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy") {
