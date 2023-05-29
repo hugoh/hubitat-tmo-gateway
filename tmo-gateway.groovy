@@ -16,10 +16,11 @@ metadata {
     }
 
     preferences {
-        input name: 'username', type: 'string', title: 'T-Mobile Gateway Username'
-        input name: 'password', type: 'string', title: 'T-Mobile Gateway Password'
-        input name: 'IP', type: 'string', title: 'Router IP address', defaultValue: '192.168.12.1'
-        input name: 'Gateway', type: 'enum', title: 'Type of gateway', options: ['Nokia'], defaultValue: 'Nokia'
+        input name: 'username', type: 'string', title: 'T-Mobile Gateway Username', required: true
+        input name: 'password', type: 'password', title: 'T-Mobile Gateway Password', required: true
+        input name: 'IP', type: 'string', title: 'Router IP address', defaultValue: '192.168.12.1', required: true
+        input name: 'Gateway', type: 'enum', title: 'Type of gateway',
+            options: ['Nokia'], defaultValue: 'Nokia', required: true
         input name: 'dryRun', type: 'bool',
                     title: '[DRY-RUN] Only pretend to send commands; for debugging purposes', defaultValue: false
         input name: 'logEnable', type: 'bool', title: 'Enable debug logging', defaultValue: false
