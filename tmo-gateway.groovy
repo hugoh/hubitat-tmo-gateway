@@ -42,8 +42,8 @@ void logDebug(String msg) {
     }
 }
 
-void login() {
-    boolean success = false
+Map login() {
+    Map ret = [success: false]
     httpGet("http://${settings.IP}/login_web_app.cgi?nonce") { nonceResp ->
         if (nonceResp?.isSuccess()) {
             nonceJson = parseJson(nonceResp.getData().toString())
@@ -70,31 +70,31 @@ void login() {
                     resp = loginResp.getData().toString()
                     logDebug("Login response: ${resp}")
                     loginJson = parseJson(resp)
-                    state.sid = loginJson.sid
-                    logDebug("Sid: ${state.sid}")
-                    state.csrfToken = loginJson.token
-                    logDebug("Token: ${state.csrfToken}")
-                    success = true
+                    ret.sid = loginJson.sid
+                    logDebug("Sid: ${ret.sid}")
+                    ret.csrfToken = loginJson.token
+                    logDebug("Token: ${ret.csrfToken}")
+                    ret.success = true
                 }
             }
         }
     }
-    state.loginSuccessful = success
+    return ret
 }
 
 void reboot() {
-    login()
-    if (!state.loginSuccessful) {
+    Map loginData = login()
+    if (!loginData.success) {
         log.error('Cannot reboot without successful login flow')
         return
     }
     rebootRequest = [
             'uri' : "http://${settings.IP}/reboot_web_app.cgi",
             headers: [
-                'Cookie': "sid=${state.sid}"
+                'Cookie': "sid=${loginData.sid}"
             ],
             'body': [
-                    'csrf_token'     : state.csrfToken,
+                    'csrf_token'     : loginData.csrfToken,
             ]
     ]
     logDebug("Reboot request: ${rebootRequest}")
