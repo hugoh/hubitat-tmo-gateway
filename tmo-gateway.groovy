@@ -4,6 +4,15 @@
  * Credits for the logic go to highvolt-dev: https://github.com/highvolt-dev/tmo-monitor
  */
 
+import groovy.transform.Field
+
+@Field static final String BOOL = 'bool'
+@Field static final String ENUM = 'enum'
+@Field static final String PASSWORD = 'password'
+@Field static final String STRING = 'string'
+
+@Field static final String ROUTER_NOKIA = 'Nokia'
+
 metadata {
     definition(
             name: 'T-Mobile Internet Gateway Driver',
@@ -13,17 +22,17 @@ metadata {
         capability 'Actuator'
 
         command 'reboot'
-    }
+            }
 
     preferences {
-        input name: 'username', type: 'string', title: 'T-Mobile Gateway Username', required: true
-        input name: 'password', type: 'password', title: 'T-Mobile Gateway Password', required: true
-        input name: 'IP', type: 'string', title: 'Router IP address', defaultValue: '192.168.12.1', required: true
-        input name: 'Gateway', type: 'enum', title: 'Type of gateway',
-            options: ['Nokia'], defaultValue: 'Nokia', required: true
-        input name: 'dryRun', type: 'bool',
+        input name: 'username', type: STRING, title: 'T-Mobile Gateway Username', required: true
+        input name: 'password', type: PASSWORD, title: 'T-Mobile Gateway Password', required: true
+        input name: 'IP', type: STRING, title: 'Router IP address', defaultValue: '192.168.12.1', required: true
+        input name: 'Gateway', type: ENUM, title: 'Type of gateway',
+            options: [ROUTER_NOKIA], defaultValue: ROUTER_NOKIA, required: true
+        input name: 'dryRun', type: BOOL,
                     title: '[DRY-RUN] Only pretend to send commands; for debugging purposes', defaultValue: false
-        input name: 'logEnable', type: 'bool', title: 'Enable debug logging', defaultValue: false
+        input name: 'logEnable', type: BOOL, title: 'Enable debug logging', defaultValue: false
     }
 }
 
@@ -137,7 +146,7 @@ String sha256url(String val1, String val2) {
 }
 
 String random16bytes() {
-    Random r = new Random()
+    Random r = new Random() // groovylint-disable-line InsecureRandom
     byte[] bytes = new byte[16]
     r.nextBytes(bytes)
     return base64urlEscape(bytes.encodeBase64().toString())
