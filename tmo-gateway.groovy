@@ -13,6 +13,8 @@ import groovy.transform.Field
 
 @Field static final String ROUTER_NOKIA = 'Nokia'
 
+public static final String version() { return "0.1.20230530+1" }
+
 metadata {
     definition(
             name: 'T-Mobile Internet Gateway Driver',
