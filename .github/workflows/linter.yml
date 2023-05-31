@@ -11,9 +11,9 @@ name: Lint Code Base
 #############################
 on:
   push:
-    branches-ignore: [release]
+    branches-ignore: [master]
   pull_request:
-    branches: [master, main, release]
+    branches: [master, main, develop]
 
 
 ###############

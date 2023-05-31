@@ -18,7 +18,7 @@ metadata {
             name: 'T-Mobile Internet Gateway Driver',
             namespace: 'hugoh',
             author: 'Hugo Haas',
-            importUrl: 'https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/release/tmo-gateway.groovy') {
+            importUrl: 'https://raw.githubusercontent.com/hugoh/hubitat-tmo-gateway/master/tmo-gateway.groovy') {
         capability 'Actuator'
 
         command 'reboot'
