@@ -13,7 +13,7 @@ import groovy.transform.Field
 
 @Field static final String ROUTER_NOKIA = 'Nokia'
 
-public static final String version() { return "0.1.20230531+1" }
+static final String version() { return '0.1.20230531+1' }
 
 metadata {
     definition(
@@ -38,13 +38,45 @@ metadata {
     }
 }
 
-void logDebug(String msg) {
+void reboot() {
+    Map loginData = login()
+    if (!loginData.success) {
+        log.error('Cannot reboot without successful login flow')
+        return
+    }
+    rebootRequest = [
+            'uri' : "http://${settings.IP}/reboot_web_app.cgi",
+            headers: [
+                'Cookie': "sid=${loginData.sid}"
+            ],
+            'body': [
+                    'csrf_token'     : loginData.csrfToken,
+            ]
+    ]
+    logDebug("Reboot request: ${rebootRequest}")
+    rebootMsg = 'T-Mobile Internet Router reboot successfully requested'
+    if (!settings.dryRun) {
+        httpPost(rebootRequest) { rebootResp ->
+            resp = rebootResp.getData()
+            if (rebootResp?.isSuccess()) {
+                logDebug("Reboot response: ${resp}")
+                log.info(rebootMsg)
+            } else {
+                log.error("Reboot request failed: ${resp}")
+            }
+        }
+    } else {
+        log.info("[DRY-RUN] ${rebootMsg} [/DRY-RUN]")
+    }
+}
+
+private void logDebug(String msg) {
     if (logEnable) {
         log.debug(msg)
     }
 }
 
-Map login() {
+private Map login() {
     Map ret = [success: false]
     httpGet("http://${settings.IP}/login_web_app.cgi?nonce") { nonceResp ->
         if (nonceResp?.isSuccess()) {
@@ -84,39 +116,7 @@ Map login() {
     return ret
 }
 
-void reboot() {
-    Map loginData = login()
-    if (!loginData.success) {
-        log.error('Cannot reboot without successful login flow')
-        return
-    }
-    rebootRequest = [
-            'uri' : "http://${settings.IP}/reboot_web_app.cgi",
-            headers: [
-                'Cookie': "sid=${loginData.sid}"
-            ],
-            'body': [
-                    'csrf_token'     : loginData.csrfToken,
-            ]
-    ]
-    logDebug("Reboot request: ${rebootRequest}")
-    rebootMsg = 'T-Mobile Internet Router reboot successfully requested'
-    if (!settings.dryRun) {
-        httpPost(rebootRequest) { rebootResp ->
-            resp = rebootResp.getData()
-            if (rebootResp?.isSuccess()) {
-                logDebug("Reboot response: ${resp}")
-                log.info(rebootMsg)
-            } else {
-                log.error("Reboot request failed: ${resp}")
-            }
-        }
-    } else {
-        log.info("[DRY-RUN] ${rebootMsg} [/DRY-RUN]")
-    }
-}
-
-String base64urlEscape(String b64) {
+private String base64urlEscape(String b64) {
     String out = ''
     for (char c : b64.toCharArray()) {
         switch (c) {
@@ -137,17 +137,17 @@ String base64urlEscape(String b64) {
     return out
 }
 
-String sha256(String val1, String val2) {
+private String sha256(String val1, String val2) {
     hash = java.security.MessageDigest.getInstance('SHA-256')
     hash.update("${val1}:${val2}".getBytes('UTF-8'))
     return hash.digest().encodeBase64().toString()
 }
 
-String sha256url(String val1, String val2) {
+private String sha256url(String val1, String val2) {
     return base64urlEscape(sha256(val1, val2))
 }
 
-String random16bytes() {
+private String random16bytes() {
     Random r = new Random() // groovylint-disable-line InsecureRandom
     byte[] bytes = new byte[16]
     r.nextBytes(bytes)
