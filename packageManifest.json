@@ -1,6 +1,6 @@
 {
   "packageName": "hubitat-tmo-gateway",
-  "version": "0.1.20230531+1",
+  "version": "0.2.0+1",
   "documentationLink": "https://github.com/hugoh/hubitat-tmo-gateway/blob/master/README.md",
   "communityLink": "https://community.hubitat.com/t/release-t-mobile-home-internet-gateway-driver/119490",
   "author": "Hugo Haas",

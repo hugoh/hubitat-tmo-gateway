@@ -13,7 +13,7 @@ import groovy.transform.Field
 
 @Field static final String ROUTER_NOKIA = 'Nokia'
 
-static final String version() { return '0.1.20230531+1' }
+static final String version() { return '0.2.0+1' }
 
 metadata {
     definition(
